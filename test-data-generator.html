@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>テストデータ生成ツール</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+  header { background: #2c3e50; color: #fff; padding: 16px 24px; }
+  header h1 { font-size: 18px; }
+  .container { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+  .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .card h2 { font-size: 15px; margin-bottom: 14px; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; display:flex; align-items:center; gap:8px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 150px; }
+  label { font-size: 13px; color: #555; }
+  select, input[type=number], input[type=text] { padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
+  .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .checkbox-group label { display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; }
+  .btn { padding: 9px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; }
+  .btn-primary { background: #3498db; color: #fff; }
+  .btn-primary:hover { background: #2980b9; }
+  .btn-success { background: #27ae60; color: #fff; }
+  .btn-success:hover { background: #219a52; }
+  .btn-danger { background: #e74c3c; color: #fff; }
+  .btn-danger:hover { background: #c0392b; }
+  .btn-orange { background: #e67e22; color: #fff; }
+  .btn-orange:hover { background: #ca6f1e; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #f4f6f8; padding: 8px 10px; text-align: left; border-bottom: 2px solid #ddd; }
+  td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  tr:hover td { background: #f9f9f9; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+  .badge-img { background: #d5f5e3; color: #1e8449; }
+  .badge-video { background: #d6eaf8; color: #1a5276; }
+  .badge-doc { background: #fdebd0; color: #935116; }
+  .badge-special { background: #f9ebea; color: #922b21; }
+  .badge-bulk { background: #e8daef; color: #6c3483; }
+  .empty { text-align: center; color: #aaa; padding: 30px; }
+  .hint { font-size: 12px; color: #888; margin-top: 3px; }
+  .spoof-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .arrow { color: #999; font-size: 18px; }
+  #fileCount { font-size: 13px; color: #666; margin-left: 8px; }
+  .img-size-section { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+  .img-size-section .section-label { font-size: 13px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
+  .preset-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .preset-btn { padding: 4px 10px; font-size: 12px; border: 1px solid #3498db; background: #fff; color: #3498db; border-radius: 4px; cursor: pointer; }
+  .preset-btn:hover { background: #3498db; color: #fff; }
+  .hidden { display: none; }
+  /* 一括生成 */
+  .bulk-section { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; margin-bottom: 12px; }
+  .bulk-tabs { display: flex; gap: 0; margin-bottom: 14px; }
+  .bulk-tab { padding: 7px 18px; font-size: 13px; border: 1px solid #ccc; background: #f4f6f8; cursor: pointer; }
+  .bulk-tab:first-child { border-radius: 5px 0 0 5px; }
+  .bulk-tab:last-child { border-radius: 0 5px 5px 0; }
+  .bulk-tab.active { background: #3498db; color: #fff; border-color: #3498db; }
+  .pattern-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .pattern-row select, .pattern-row input { padding: 5px 8px; font-size: 13px; }
+  .pattern-row .btn-sm { padding: 5px 10px; }
+  .preview-count { font-size: 12px; color: #8e44ad; font-weight: bold; margin-left: 8px; }
+  #bulkPreview { font-size: 12px; color: #666; margin-top: 8px; max-height: 80px; overflow-y: auto; background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 6px 10px; }
+</style>
+</head>
+<body>
+<header><h1>🗂 テストデータ生成ツール</h1></header>
+<div class="container">
+
+  <!-- 通常ファイル生成 -->
+  <div class="card">
+    <h2>📄 通常ファイル生成</h2>
+    <div class="row">
+      <div class="field">
+        <label>ファイル形式</label>
+        <select id="fileType" onchange="onFileTypeChange()">
+          <optgroup label="画像">
+            <option value="jpg">JPG</option><option value="png">PNG</option>
+            <option value="gif">GIF</option><option value="webp">WebP</option>
+            <option value="bmp">BMP</option><option value="svg">SVG</option>
+          </optgroup>
+          <optgroup label="動画">
+            <option value="mp4">MP4</option><option value="avi">AVI</option>
+            <option value="mov">MOV</option><option value="mkv">MKV</option>
+          </optgroup>
+          <optgroup label="ドキュメント">
+            <option value="pdf">PDF</option><option value="txt">TXT</option>
+            <option value="csv">CSV</option><option value="json">JSON</option>
+            <option value="xml">XML</option><option value="html">HTML</option>
+            <option value="docx">DOCX</option><option value="xlsx">XLSX</option>
+            <option value="zip">ZIP</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="field" id="sizeTypeField">
+        <label>ファイルサイズ</label>
+        <select id="sizeType" onchange="toggleCustomSize()">
+          <option value="0">0バイト（空ファイル）</option>
+          <option value="1">1バイト</option>
+          <option value="1KB">1KB</option>
+          <option value="100KB">100KB</option>
+          <option value="1MB">1MB</option>
+          <option value="5MB">5MB</option>
+          <option value="10MB">10MB</option>
+          <option value="custom">カスタム指定</option>
+        </select>
+      </div>
+      <div class="field hidden" id="customSizeField">
+        <label>カスタムサイズ</label>
+        <div style="display:flex;gap:6px">
+          <input type="number" id="customSize" value="1" min="0" style="flex:1">
+          <select id="customUnit">
+            <option value="1">B</option>
+            <option value="1024">KB</option>
+            <option value="1048576" selected>MB</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="imgSizeSection" class="img-size-section hidden">
+      <div class="section-label">🖼 画像サイズ指定</div>
+      <div class="row">
+        <div class="field">
+          <label>サイズ種別</label>
+          <select id="imgSizeMode" onchange="onImgSizeModeChange()">
+            <option value="auto">自動（小さい画像）</option>
+            <option value="custom">幅・高さを指定</option>
+            <option value="preset">プリセット</option>
+          </select>
+        </div>
+      </div>
+      <div id="imgCustomSize" class="hidden">
+        <div class="row">
+          <div class="field"><label>幅 (px)</label><input type="number" id="imgW" value="800" min="1" max="10000"></div>
+          <div class="field"><label>高さ (px)</label><input type="number" id="imgH" value="600" min="1" max="10000"></div>
+        </div>
+      </div>
+      <div id="imgPresets" class="hidden">
+        <div class="preset-btns">
+          <button class="preset-btn" onclick="setPreset(1,1)">1×1</button>
+          <button class="preset-btn" onclick="setPreset(100,100)">100×100</button>
+          <button class="preset-btn" onclick="setPreset(1920,1080)">1920×1080 (FHD)</button>
+          <button class="preset-btn" onclick="setPreset(3840,2160)">3840×2160 (4K)</button>
+          <button class="preset-btn" onclick="setPreset(10000,10000)">10000×10000</button>
+          <button class="preset-btn" onclick="setPreset(1,10000)">1×10000</button>
+          <button class="preset-btn" onclick="setPreset(10000,1)">10000×1</button>
+        </div>
+        <div id="presetSelected" style="font-size:12px;color:#3498db;margin-top:6px"></div>
+      </div>
+      <div style="margin-top:10px">
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="optTransparent"> 透過</label>
+          <label><input type="checkbox" id="optExif"> EXIF付き</label>
+          <label><input type="checkbox" id="optAnimGif"> アニメーションGIF</label>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>その他オプション</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="optCorrupt"> 破損ファイル</label>
+          <label><input type="checkbox" id="optMaxName"> 長いファイル名</label>
+          <label><input type="checkbox" id="optSpecialChar"> 特殊文字ファイル名</label>
+          <label><input type="checkbox" id="optJapanese"> 日本語ファイル名</label>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="addNormalFile()">リストに追加</button>
+  </div>
+
+  <!-- 拡張子偽装 -->
+  <div class="card">
+    <h2>🎭 拡張子偽装ファイル生成</h2>
+    <p class="hint" style="margin-bottom:12px">中身は「実際の形式」のデータで、拡張子は「偽装する形式」にしたファイルを生成します</p>
+    <div class="spoof-row">
+      <div class="field">
+        <label>実際の中身</label>
+        <select id="spoofReal">
+          <option value="jpg">JPG画像</option><option value="png">PNG画像</option>
+          <option value="gif">GIF画像</option><option value="pdf">PDF</option>
+          <option value="txt">TXT</option><option value="zip">ZIP</option>
+          <option value="exe">EXE（実行ファイル風）</option>
+        </select>
+      </div>
+      <span class="arrow">→</span>
+      <div class="field">
+        <label>偽装する拡張子</label>
+        <select id="spoofFake">
+          <option value="jpg">jpg</option><option value="png">png</option>
+          <option value="gif">gif</option><option value="webp">webp</option>
+          <option value="mp4">mp4</option><option value="pdf">pdf</option>
+          <option value="txt">txt</option><option value="docx">docx</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:12px" onclick="addSpoofFile()">リストに追加</button>
+  </div>
+
+  <!-- 一括生成 -->
+  <div class="card">
+    <h2>⚡ 一括生成</h2>
+    <div class="bulk-tabs">
+      <div class="bulk-tab active" onclick="switchBulkTab('range')">サイズ範囲指定</div>
+      <div class="bulk-tab" onclick="switchBulkTab('pattern')">パターンリスト</div>
+    </div>
+
+    <!-- サイズ範囲 -->
+    <div id="bulkRange">
+      <div class="row">
+        <div class="field" style="min-width:120px;max-width:160px">
+          <label>ファイル形式</label>
+          <select id="bulkExt">
+            <option value="jpg">JPG</option><option value="png">PNG</option>
+            <option value="pdf">PDF</option><option value="txt">TXT</option>
+            <option value="mp4">MP4</option><option value="zip">ZIP</option>
+          </select>
+        </div>
+        <div class="field" style="min-width:160px">
+          <label>開始サイズ</label>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="rangeFrom" value="1" min="0" style="width:80px">
+            <select id="rangeFromUnit" style="flex:1">
+              <option value="1">B</option><option value="1024" selected>KB</option><option value="1048576">MB</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="min-width:160px">
+          <label>終了サイズ</label>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="rangeTo" value="10" min="1" style="width:80px">
+            <select id="rangeToUnit" style="flex:1">
+              <option value="1">B</option><option value="1024" selected>KB</option><option value="1048576">MB</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="min-width:160px">
+          <label>刻み幅</label>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="rangeStep" value="1" min="1" style="width:80px">
+            <select id="rangeStepUnit" style="flex:1">
+              <option value="1">B</option><option value="1024" selected>KB</option><option value="1048576">MB</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <button class="btn btn-orange" onclick="previewRange()">プレビュー</button>
+        <span id="rangeCount" class="preview-count"></span>
+      </div>
+      <div id="bulkPreview"></div>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="addBulkRange()">全てリストに追加</button>
+    </div>
+
+    <!-- パターンリスト -->
+    <div id="bulkPattern" class="hidden">
+      <div id="patternRows">
+        <div class="pattern-row">
+          <select class="p-ext">
+            <option value="jpg">JPG</option><option value="png">PNG</option>
+            <option value="gif">GIF</option><option value="pdf">PDF</option>
+            <option value="txt">TXT</option><option value="mp4">MP4</option>
+            <option value="zip">ZIP</option><option value="docx">DOCX</option>
+          </select>
+          <input type="number" class="p-size" value="1" min="0" style="width:70px">
+          <select class="p-unit">
+            <option value="1">B</option><option value="1024" selected>KB</option><option value="1048576">MB</option>
+          </select>
+          <input type="text" class="p-note" placeholder="備考（任意）" style="flex:1;min-width:100px">
+          <button class="btn btn-danger btn-sm" onclick="removePatternRow(this)">－</button>
+        </div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn btn-sm" style="background:#ecf0f1;border:1px solid #ccc" onclick="addPatternRow()">＋ 行を追加</button>
+        <button class="btn btn-primary btn-sm" onclick="addBulkPattern()">全てリストに追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 生成リスト -->
+  <div class="card">
+    <h2>📋 生成リスト <span id="fileCount"></span></h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>ファイル名</th><th>種別</th><th>備考</th><th></th></tr></thead>
+        <tbody id="fileList"><tr><td colspan="4" class="empty">まだファイルがありません</td></tr></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-success" onclick="downloadAll()">⬇ まとめてダウンロード（ZIP）</button>
+      <button class="btn btn-danger btn-sm" onclick="clearAll()">リストをクリア</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const files = [];
+const IMG_TYPES = ['jpg','png','gif','webp','bmp','svg'];
+const SIZE_MAP = {'0':0,'1':1,'1KB':1024,'100KB':102400,'1MB':1048576,'5MB':5242880,'10MB':10485760};
+let selectedPreset = null;
+
+// --- UI helpers ---
+function onFileTypeChange() {
+  const ext = document.getElementById('fileType').value;
+  const isImg = IMG_TYPES.includes(ext);
+  document.getElementById('imgSizeSection').classList.toggle('hidden', !isImg);
+  document.getElementById('sizeTypeField').classList.toggle('hidden', isImg);
+  document.getElementById('customSizeField').classList.add('hidden');
+}
+function toggleCustomSize() {
+  document.getElementById('customSizeField').classList.toggle('hidden', document.getElementById('sizeType').value !== 'custom');
+}
+function onImgSizeModeChange() {
+  const m = document.getElementById('imgSizeMode').value;
+  document.getElementById('imgCustomSize').classList.toggle('hidden', m !== 'custom');
+  document.getElementById('imgPresets').classList.toggle('hidden', m !== 'preset');
+}
+function setPreset(w, h) {
+  selectedPreset = {w, h};
+  document.getElementById('presetSelected').textContent = `選択中: ${w}×${h} px`;
+}
+function getImgDimensions() {
+  const m = document.getElementById('imgSizeMode').value;
+  if (m === 'auto') return {w:100,h:100};
+  if (m === 'custom') return {w:parseInt(document.getElementById('imgW').value)||100, h:parseInt(document.getElementById('imgH').value)||100};
+  return selectedPreset || {w:100,h:100};
+}
+function getSize() {
+  const t = document.getElementById('sizeType').value;
+  if (t === 'custom') return parseInt(document.getElementById('customSize').value) * parseInt(document.getElementById('customUnit').value);
+  return SIZE_MAP[t];
+}
+function switchBulkTab(tab) {
+  document.getElementById('bulkRange').classList.toggle('hidden', tab !== 'range');
+  document.getElementById('bulkPattern').classList.toggle('hidden', tab !== 'pattern');
+  document.querySelectorAll('.bulk-tab').forEach((el,i) => el.classList.toggle('active', (i===0&&tab==='range')||(i===1&&tab==='pattern')));
+}
+
+// --- Bulk range ---
+function getRangeFiles() {
+  const ext = document.getElementById('bulkExt').value;
+  const from = parseInt(document.getElementById('rangeFrom').value) * parseInt(document.getElementById('rangeFromUnit').value);
+  const to = parseInt(document.getElementById('rangeTo').value) * parseInt(document.getElementById('rangeToUnit').value);
+  const step = parseInt(document.getElementById('rangeStep').value) * parseInt(document.getElementById('rangeStepUnit').value);
+  if (!step || from > to) return [];
+  const items = [];
+  for (let s = from; s <= to; s += step) items.push({ext, size: s});
+  return items;
+}
+function previewRange() {
+  const items = getRangeFiles();
+  document.getElementById('rangeCount').textContent = `${items.length}件`;
+  document.getElementById('bulkPreview').innerHTML = items.slice(0,20).map(f =>
+    `<div>${f.ext}_${formatSize(f.size)}.${f.ext}</div>`
+  ).join('') + (items.length > 20 ? `<div style="color:#aaa">...他${items.length-20}件</div>` : '');
+}
+function addBulkRange() {
+  const items = getRangeFiles();
+  if (!items.length) { alert('有効な範囲を指定してください'); return; }
+  items.forEach(f => {
+    const data = makeNonImageData(f.ext, f.size, false);
+    files.push({filename:`${f.ext}_${formatSize(f.size)}.${f.ext}`, ext:f.ext, data, cat:getCategory(f.ext), notes:`一括(範囲)`, spoof:false});
+  });
+  renderList();
+}
+
+// --- Bulk pattern ---
+function addPatternRow() {
+  const row = document.createElement('div');
+  row.className = 'pattern-row';
+  row.innerHTML = `
+    <select class="p-ext">
+      <option value="jpg">JPG</option><option value="png">PNG</option>
+      <option value="gif">GIF</option><option value="pdf">PDF</option>
+      <option value="txt">TXT</option><option value="mp4">MP4</option>
+      <option value="zip">ZIP</option><option value="docx">DOCX</option>
+    </select>
+    <input type="number" class="p-size" value="1" min="0" style="width:70px">
+    <select class="p-unit">
+      <option value="1">B</option><option value="1024" selected>KB</option><option value="1048576">MB</option>
+    </select>
+    <input type="text" class="p-note" placeholder="備考（任意）" style="flex:1;min-width:100px">
+    <button class="btn btn-danger btn-sm" onclick="removePatternRow(this)">－</button>`;
+  document.getElementById('patternRows').appendChild(row);
+}
+function removePatternRow(btn) {
+  const rows = document.querySelectorAll('.pattern-row');
+  if (rows.length > 1) btn.parentElement.remove();
+}
+function addBulkPattern() {
+  document.querySelectorAll('.pattern-row').forEach(row => {
+    const ext = row.querySelector('.p-ext').value;
+    const size = parseInt(row.querySelector('.p-size').value) * parseInt(row.querySelector('.p-unit').value);
+    const note = row.querySelector('.p-note').value || '一括(パターン)';
+    const data = makeNonImageData(ext, size, false);
+    files.push({filename:`pattern_${ext}_${formatSize(size)}.${ext}`, ext, data, cat:getCategory(ext), notes:note, spoof:false});
+  });
+  renderList();
+}
+
+// --- Data generation ---
+async function makeImageData(ext, w, h, transparent, corrupt) {
+  if (corrupt) { const a=new Uint8Array(1024); for(let i=0;i<a.length;i++) a[i]=Math.floor(Math.random()*256); return a; }
+  if (ext==='svg') {
+    const s=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="${transparent?'none':'#4a90d9'}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="14" fill="${transparent?'#333':'#fff'}">${w}x${h}</text></svg>`;
+    return new TextEncoder().encode(s);
+  }
+  if (ext==='gif' && document.getElementById('optAnimGif').checked) return makeAnimatedGif(w,h);
+  return new Promise(resolve => {
+    const c=document.createElement('canvas');
+    c.width=Math.min(w,4096); c.height=Math.min(h,4096);
+    const ctx=c.getContext('2d');
+    if (!transparent) {
+      ctx.fillStyle='#4a90d9'; ctx.fillRect(0,0,c.width,c.height);
+      ctx.fillStyle='#fff'; ctx.font=`${Math.max(12,Math.min(40,c.width/10))}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(`${w}x${h}`,c.width/2,c.height/2);
+    }
+    const m={jpg:'image/jpeg',png:'image/png',gif:'image/png',webp:'image/webp',bmp:'image/bmp'};
+    c.toBlob(b=>b.arrayBuffer().then(buf=>resolve(new Uint8Array(buf))), m[ext]||'image/png', 0.92);
+  });
+}
+function makeAnimatedGif(w,h) {
+  return new Uint8Array([0x47,0x49,0x46,0x38,0x39,0x61,w&0xFF,(w>>8)&0xFF,h&0xFF,(h>>8)&0xFF,0xF0,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x21,0xFF,0x0B,0x4E,0x45,0x54,0x53,0x43,0x41,0x50,0x45,0x32,0x2E,0x30,0x03,0x01,0x00,0x00,0x00,0x21,0xF9,0x04,0x00,0x32,0x00,0x00,0x00,0x2C,0x00,0x00,0x00,0x00,w&0xFF,(w>>8)&0xFF,h&0xFF,(h>>8)&0xFF,0x00,0x02,0x02,0x4C,0x01,0x00,0x21,0xF9,0x04,0x00,0x32,0x00,0x00,0x00,0x2C,0x00,0x00,0x00,0x00,w&0xFF,(w>>8)&0xFF,h&0xFF,(h>>8)&0xFF,0x00,0x02,0x02,0x44,0x01,0x00,0x3B]);
+}
+function makeNonImageData(ext, size, corrupt) {
+  const headers={pdf:[0x25,0x50,0x44,0x46,0x2D,0x31,0x2E,0x34],zip:[0x50,0x4B,0x03,0x04],mp4:[0x00,0x00,0x00,0x20,0x66,0x74,0x79,0x70],avi:[0x52,0x49,0x46,0x46,0x00,0x00,0x00,0x00,0x41,0x56,0x49,0x20],exe:[0x4D,0x5A],docx:[0x50,0x4B,0x03,0x04],xlsx:[0x50,0x4B,0x03,0x04]};
+  const h=headers[ext]||[];
+  if (size===0) return new Uint8Array(0);
+  const a=new Uint8Array(Math.max(size,h.length));
+  if (corrupt) { for(let i=0;i<a.length;i++) a[i]=Math.floor(Math.random()*256); }
+  else { for(let i=0;i<h.length;i++) a[i]=h[i]; }
+  return a;
+}
+
+// --- Normal file add ---
+async function addNormalFile() {
+  const ext=document.getElementById('fileType').value;
+  const isImg=IMG_TYPES.includes(ext);
+  const corrupt=document.getElementById('optCorrupt').checked;
+  const longName=document.getElementById('optMaxName').checked;
+  const special=document.getElementById('optSpecialChar').checked;
+  const japanese=document.getElementById('optJapanese').checked;
+  let base='testfile';
+  if (japanese) base='テストファイル';
+  if (special) base='test@file#name$%';
+  if (longName) base='a'.repeat(251);
+  const notes=[];
+  let data;
+  if (isImg) {
+    const {w,h}=getImgDimensions();
+    const transparent=document.getElementById('optTransparent').checked;
+    if (corrupt) notes.push('破損');
+    if (transparent) notes.push('透過');
+    if (document.getElementById('optExif').checked) notes.push('EXIF付き');
+    if (document.getElementById('optAnimGif').checked && ext==='gif') notes.push('アニメーション');
+    notes.push(`${w}×${h}px`);
+    data=await makeImageData(ext,w,h,transparent,corrupt);
+  } else {
+    const size=getSize();
+    if (corrupt) notes.push('破損');
+    if (size===0) notes.push('空ファイル');
+    data=makeNonImageData(ext,size,corrupt);
+  }
+  files.push({filename:`${base}.${ext}`, ext, data, cat:getCategory(ext), notes:notes.join(' / '), spoof:false});
+  renderList();
+}
+function addSpoofFile() {
+  const real=document.getElementById('spoofReal').value;
+  const fake=document.getElementById('spoofFake').value;
+  files.push({filename:`spoof_${real}_as.${fake}`, ext:fake, data:makeNonImageData(real,10240,false), cat:'special', notes:`中身:${real.toUpperCase()} 偽装:${fake.toUpperCase()}`, spoof:true});
+  renderList();
+}
+
+// --- List ---
+function getCategory(ext) {
+  if (IMG_TYPES.includes(ext)) return 'img';
+  if (['mp4','avi','mov','mkv'].includes(ext)) return 'video';
+  return 'doc';
+}
+function badgeHtml(cat,label) {
+  const cls={img:'badge-img',video:'badge-video',doc:'badge-doc',special:'badge-special'};
+  return `<span class="badge ${cls[cat]||'badge-doc'}">${label}</span>`;
+}
+function renderList() {
+  const tbody=document.getElementById('fileList');
+  document.getElementById('fileCount').textContent=`(${files.length}件)`;
+  if (!files.length) { tbody.innerHTML='<tr><td colspan="4" class="empty">まだファイルがありません</td></tr>'; return; }
+  tbody.innerHTML=files.map((f,i)=>`
+    <tr>
+      <td>${f.filename}</td>
+      <td>${badgeHtml(f.cat, f.ext.toUpperCase())}</td>
+      <td>${f.notes||'-'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeFile(${i})">削除</button></td>
+    </tr>`).join('');
+}
+function removeFile(i) { files.splice(i,1); renderList(); }
+function clearAll() { files.length=0; renderList(); }
+function formatSize(b) {
+  if (b===0) return '0B';
+  if (b<1024) return b+'B';
+  if (b<1048576) return (b/1024).toFixed(1)+'KB';
+  return (b/1048576).toFixed(1)+'MB';
+}
+async function downloadAll() {
+  if (!files.length) { alert('ファイルがありません'); return; }
+  const zip=new JSZip();
+  files.forEach(f=>zip.file(f.filename,f.data));
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='test_data.zip';
+  a.click();
+}
+</script>
+</body>
+</html>
